@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
+using System.Text;
 
 namespace ReflexionSerialization
 {
@@ -10,107 +7,157 @@ namespace ReflexionSerialization
     {
         public string Serialize<T>(T serializationObject)
         {
-            if (serializationObject is IEnumerable enumerable)
+            var sb = new StringBuilder();
+
+            sb.AppendLine(CreateCsvHeaders<T>());
+
+            sb.AppendLine(CreateCsvContent(serializationObject));
+
+            return sb.ToString();
+        }
+
+        public string SerializeIEnumerable<T>(IEnumerable<T> collection)
+        {
+            var sb = new StringBuilder();
+
+            if (collection != null && collection.Any())
             {
-                Type itemType = typeof(T).GetGenericArguments()[0];
-                var headersMethod = typeof(CSVNewtonsoftSerializator).GetMethod("CreateCsvHeaders");
-                var headers = headersMethod.MakeGenericMethod(itemType).Invoke(this, new object[] { });
-                var csvContent = new List<string>();
-                foreach (var item in enumerable)
+                sb.AppendLine(CreateCsvHeaders<T>());
+
+                foreach (var item in collection)
                 {
-                    csvContent.Add(CreateCsvContent(item));
+                    sb.AppendLine(CreateCsvContent(item));
                 }
-                return $"{headers}{Environment.NewLine}{string.Join(Environment.NewLine, csvContent)}";
             }
 
-            return $"{CreateCsvHeaders<T>()}{Environment.NewLine}{CreateCsvContent(serializationObject)}";
+            return sb.ToString();
         }
 
         public T Deserialize<T>(string deserializationString) where T : new()
         {
-            var lines = deserializationString.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            var result = new T();
+            var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-            if (lines.Length < 2) return new T();
+            var lines = deserializationString.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length == 0) return result;
 
             var headers = lines[0].Split(',');
-            var numberOfHeaders = headers.Length;
+            var values = lines[1].Split(',');
 
-            if (typeof(IEnumerable).IsAssignableFrom(typeof(T)))
+            for (int i = 0; i < headers.Length && i < values.Length; i++)
             {
-                Type elementType = typeof(T).GetGenericArguments()[0];
-                var results = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+                var header = headers[i].Trim();
+                var value = values[i].Trim();
 
-                for (int i = 1; i < lines.Length; i++)
+                var field = fields.FirstOrDefault(f => f.Name.Equals(header, StringComparison.OrdinalIgnoreCase));
+                if (field != null && !string.IsNullOrWhiteSpace(value))
                 {
-                    var obj = Activator.CreateInstance(elementType);
-                    var values = lines[i].Split(',');
-
-                    for (int j = 0; j < numberOfHeaders; j++)
+                    try
                     {
-                        if (j < values.Length)
-                        {
-                            var prop = elementType.GetProperty(headers[j].Trim());
-                            if (prop != null)
-                            {
-                                var value = Convert.ChangeType(values[j].Trim(), prop.PropertyType);
-                                prop.SetValue(obj, value);
-                            }
+                        var convertedValue = Convert.ChangeType(value, field.FieldType);
+                        field.SetValue(result, convertedValue);
+                    }
+                    catch (Exception)
+                    {
 
-                            var field = elementType.GetField(headers[j].Trim());
-                            if (field != null)
-                            {
-                                var value = Convert.ChangeType(values[j].Trim(), field.FieldType);
-                                field.SetValue(obj, value);
-                            }
+                    }
+                }
+
+                var property = properties.FirstOrDefault(p => p.Name.Equals(header, StringComparison.OrdinalIgnoreCase));
+                if (property != null && property.CanWrite && !string.IsNullOrWhiteSpace(value))
+                {
+                    try
+                    {
+                        var convertedValue = Convert.ChangeType(value, property.PropertyType);
+                        property.SetValue(result, convertedValue);
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+                }
+            }
+
+            return result;
+        }
+
+
+        public IEnumerable<T> DeserializeIEnumerable<T>(string deserializationString) where T : new()
+        {
+            var resultList = new List<T>();
+            var lines = deserializationString.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (lines.Length == 0) return resultList;
+
+            var headers = lines[0].Split(',');
+
+            for (int i = 1; i < lines.Length; i++)
+            {
+                var values = lines[i].Split(',');
+                var result = new T();
+
+                for (int j = 0; j < headers.Length && j < values.Length; j++)
+                {
+                    var header = headers[j].Trim();
+                    var value = values[j].Trim();
+
+                    var field = typeof(T).GetField(header, BindingFlags.Public | BindingFlags.Instance);
+                    if (field != null && !string.IsNullOrWhiteSpace(value))
+                    {
+                        try
+                        {
+                            var convertedValue = Convert.ChangeType(value, field.FieldType);
+                            field.SetValue(result, convertedValue);
+                        }
+                        catch (Exception)
+                        {
+
                         }
                     }
 
-                    results.Add(obj);
-                }
-
-                return (T)results;
-            }
-            else
-            {
-                var obj = new T();
-                var values = lines[1].Split(',');
-
-                for (int i = 0; i < numberOfHeaders; i++)
-                {
-                    var prop = typeof(T).GetProperty(headers[i].Trim());
-                    if (prop != null && i < values.Length)
+                    var property = typeof(T).GetProperty(header, BindingFlags.Public | BindingFlags.Instance);
+                    if (property != null && property.CanWrite && !string.IsNullOrWhiteSpace(value))
                     {
-                        var value = Convert.ChangeType(values[i].Trim(), prop.PropertyType);
-                        prop.SetValue(obj, value);
-                    }
+                        try
+                        {
+                            var convertedValue = Convert.ChangeType(value, property.PropertyType);
+                            property.SetValue(result, convertedValue);
+                        }
+                        catch (Exception)
+                        {
 
-                    var field = typeof(T).GetField(headers[i].Trim());
-                    if (field != null && i < values.Length)
-                    {
-                        var value = Convert.ChangeType(values[i].Trim(), field.FieldType);
-                        field.SetValue(obj, value);
+                        }
                     }
                 }
 
-                return obj;
+                resultList.Add(result);
             }
+
+            return resultList;
         }
 
-        public string CreateCsvHeaders<T>()
+
+        private string CreateCsvHeaders<T>()
         {
-            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            var headers = properties.Select(p => p.Name).Concat(fields.Select(f => f.Name));
-            return string.Join(",", headers);
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            var fieldNames = fields.Select(f => f.Name);
+            var propertyNames = properties.Select(p => p.Name);
+
+            return string.Join(",", fieldNames.Concat(propertyNames));
         }
 
-        public string CreateCsvContent<T>(T serializationObject)
+        private string CreateCsvContent<T>(T serializationObject)
         {
-            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var fields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            var values = properties.Select(p => p.GetValue(serializationObject)?.ToString() ?? string.Empty)
-                .Concat(fields.Select(f => f.GetValue(serializationObject)?.ToString() ?? string.Empty));
-            return string.Join(",", values);
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            var fieldValues = fields.Select(f => f.GetValue(serializationObject)?.ToString() ?? string.Empty);
+            var propertyValues = properties.Select(p => p.GetValue(serializationObject)?.ToString() ?? string.Empty);
+
+            return string.Join(",", fieldValues.Concat(propertyValues));
         }
     }
 }

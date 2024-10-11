@@ -31,9 +31,8 @@
             _serializatorType = serializatorType;
         }
 
-        public void PrintCheckResults()
+        public CheckCSVSerializatorResult()
         {
-
         }
     }
 }
