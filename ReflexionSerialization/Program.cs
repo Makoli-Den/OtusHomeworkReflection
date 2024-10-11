@@ -1,200 +1,147 @@
-﻿using ReflectionSerialization.Serializators;
-using ReflectionSerialization.TestData;
+﻿using System;
 
 namespace ReflectionSerialization
 {
-    internal static class Program
+    internal class Program
     {
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-
-            string[] mainMenuOptions = { "Работа с Json", "Работа с CSV", "Выход" };
-            Action[] mainMenuActions = 
-            {
-                () => DisplayTypeBasedMenu("Json"),
-                () => DisplayTypeBasedMenu("CSV"),
-                Exit
+            // Опции главного меню с заголовками и подменю
+            string[] menuOptions = {
+                "- Работа с Json",  // Заголовок 1
+                "\tСериализация", // Подэлемент 1
+                "\tДесериализация", // Подэлемент 2
+                "- Работа с CSV", // Заголовок 2
+                "\tИмпорт", // Подэлемент 3
+                "\tЭкспорт", // Подэлемент 4
+                "Выход" // Заголовок 3
             };
 
-            ShowMenu("Главное меню", mainMenuOptions, mainMenuActions);
+            // Действия, соответствующие каждому элементу меню
+            Action[] menuActions = {
+                null, // Заголовок 1 (недоступно)
+                Option1, // Подэлемент 1
+                Option2, // Подэлемент 2
+                null, // Заголовок 2 (недоступно)
+                Option3, // Подэлемент 3
+                Option4, // Подэлемент 4
+                Exit // Заголовок 3 (недоступно)
+            };
+
+            // Определяем индексы заголовков
+            int[] headerIndices = new int[] { 0, 3 };
+            ShowMenu("Главное меню", menuOptions, menuActions, 0, headerIndices);
         }
 
-        static void ShowMenu(string menuTitle, string[] options, Action[] actions)
+        public static void ShowMenu(string title, string[] options, Action[] actions, int currentSelection, int[] headerIndices)
         {
-            if (options.Length != actions.Length)
-            {
-                throw new ArgumentException("Количество опций должно совпадать с количеством действий.");
-            }
-
-            int selectedIndex = 0;
+            Console.Clear();
+            Console.WriteLine(title);
+            Console.WriteLine(new string('-', title.Length));
 
             while (true)
             {
-                DisplayOptions(menuTitle, options, selectedIndex);
-                var key = Console.ReadKey();
-
-                switch (key.Key)
+                for (int i = 0; i < options.Length; i++)
                 {
-                    case ConsoleKey.UpArrow:
-                        selectedIndex = (selectedIndex == 0) ? options.Length - 1 : selectedIndex - 1;
-                        break;
-                    case ConsoleKey.DownArrow:
-                        selectedIndex = (selectedIndex == options.Length - 1) ? 0 : selectedIndex + 1;
-                        break;
-                    case ConsoleKey.Enter:
-                        actions[selectedIndex]();
-                        break;
-                }
-            }
-        }
+                    string formattedOption = $"{options[i]}";
+                    bool isHeader = Array.Exists(headerIndices, index => index == i);
 
-        static void DisplayMainLabel()
-        {
-            Console.WriteLine("Программа сериализации в CSV и десериализации из CSV\n\n");
-        }
+                    if (isHeader)
+                    {
+                        Console.ResetColor();
+                    }
+                    else if (i == currentSelection)
+                    {
+                        Console.BackgroundColor = ConsoleColor.Gray;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                    }
+                    else
+                    {
+                        Console.ResetColor();
+                    }
 
-        // Метод для отображения опций меню
-        static void DisplayOptions(string menuTitle, string[] options, int selectedIndex)
-        {
-            Console.Clear();
-            DisplayMainLabel();
-            Console.WriteLine(menuTitle + ":\n");
+                    if (!isHeader)
+                    {
+                        formattedOption = formattedOption;
+                    }
 
-            for (int i = 0; i < options.Length; i++)
-            {
-                if (i == selectedIndex)
-                {
-                    Console.BackgroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.WriteLine(formattedOption);
                 }
 
-                Console.WriteLine(options[i]);
                 Console.ResetColor();
+
+                ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key == ConsoleKey.DownArrow)
+                {
+                    currentSelection = (currentSelection + 1) % options.Length; 
+                    while (Array.Exists(headerIndices, index => index == currentSelection))
+                    {
+                        currentSelection = (currentSelection + 1) % options.Length;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.UpArrow)
+                {
+                    currentSelection = (currentSelection - 1 + options.Length) % options.Length;
+                    while (Array.Exists(headerIndices, index => index == currentSelection))
+                    {
+                        currentSelection = (currentSelection - 1 + options.Length) % options.Length;
+                    }
+                }
+                else if (keyInfo.Key == ConsoleKey.Enter)
+                {
+                    if (actions[currentSelection] != null)
+                    {
+                        actions[currentSelection].Invoke();
+                        Console.Clear();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Этот пункт меню недоступен. Нажмите любую клавишу для продолжения...");
+                        Console.ReadKey(true);
+                        Console.Clear();
+                    }
+                }
+
+                Console.Clear();
             }
         }
 
-        // Действие для "Опция 1"
-        static void Option1()
+        public static void Option1()
         {
-            Console.WriteLine("Вы выбрали 'Опция 1'.");
-            WaitForUser();
+            Console.WriteLine("Вы выбрали 'Сериализация'.");
+            // Логика работы с сериализацией...
+            Console.WriteLine("Нажмите любую клавишу для возврата в меню.");
+            Console.ReadKey(true);
         }
 
-        // Действие для "Опция 2"
-        static void Option2()
+        public static void Option2()
         {
-            Console.WriteLine("Вы выбрали 'Опция 2'.");
-            WaitForUser();
+            Console.WriteLine("Вы выбрали 'Десериализация'.");
+            // Логика работы с десериализацией...
+            Console.WriteLine("Нажмите любую клавишу для возврата в меню.");
+            Console.ReadKey(true);
         }
 
-        static void DisplayTypeBasedMenu(string type)
+        public static void Option3()
         {
-            string[] subMenuOptions = { "Работа с файлами", "Работа с классами", "Назад" };
-            Action[] subMenuActions =
-            {
-                () => FileWorkMenu(type),
-                () => ClassWorkMenu(type),
-                BackToMainMenu
-            };
-
-            ShowMenu("Работа с Json", subMenuOptions, subMenuActions);
+            Console.WriteLine("Вы выбрали 'Импорт'.");
+            // Логика работы с импортом...
+            Console.WriteLine("Нажмите любую клавишу для возврата в меню.");
+            Console.ReadKey(true);
         }
 
-        static void FileWorkMenu(string type)
+        public static void Option4()
         {
-
+            Console.WriteLine("Вы выбрали 'Экспорт'.");
+            // Логика работы с экспортом...
+            Console.WriteLine("Нажмите любую клавишу для возврата в меню.");
+            Console.ReadKey(true);
         }
 
-        static void ClassWorkMenu(string type)
-        {
-            string[] subMenuOptions = { "Большой класс TestData", "Маленький класс F", "Назад" };
-            Action[] subMenuActions =
-            {
-                () => ClassWork<F>(type),
-                () => ClassWork<F>(type),
-                BackToMainMenu
-            };
-
-            ShowMenu("Работа с классами Json", subMenuOptions, subMenuActions);
-        }
-
-        static void ClassWork<T>(string type)
-        {
-
-        }
-
-        // Действие для "Подопция 2"
-        static void SimpleClass(string type)
-        {
-            int count = GetNumber();
-            string[] subMenuOptions = { "Начать", "Назад" };
-            Action[] subMenuActions = { () => Begin(count), BackToMainMenu };
-
-            ShowMenu($"Выбранное количество элементов: {count}", subMenuOptions, subMenuActions);
-        }
-
-        static void Begin(int count)
-        {
-            switch (count)
-            {
-                case 0:
-                    throw new Exception("Введен ноль, такого не может быть :(");
-                case 1:
-
-                    break;
-                default:
-                    break;
-            }
-
-        }
-
-        static void DisplayCSVMenu()
-        {
-            string[] subMenuOptions = { "Работа с файлами", "Работа с классами", "Назад" };
-            Action[] subMenuActions = { SubOption1, SubOption1, BackToMainMenu };
-
-            ShowMenu("Дополнительное меню", subMenuOptions, subMenuActions);
-        }
-
-        // Действие для "Подопция 1"
-        static void SubOption1()
-        {
-            Console.WriteLine("Вы выбрали 'Подопция 1'.");
-            WaitForUser();
-        }
-
-        public static int GetNumber()
-        {
-            int number;
-            string input;
-
-            do
-            {
-                Console.Write("Введите количество элементов: ");
-                input = Console.ReadLine();
-
-            } while (!int.TryParse(input, out number) || number <= 0);
-
-            return number;
-        }
-
-        static void BackToMainMenu()
-        {
-            Console.Clear();
-            Console.WriteLine("Возвращаемся в главное меню...");
-        }
-
-        static void Exit()
+        public static void Exit()
         {
             Console.WriteLine("Выход из программы.");
-            Environment.Exit(0);
-        }
-
-        static void WaitForUser()
-        {
-            Console.WriteLine("Нажмите любую клавишу для продолжения...");
-            Console.ReadKey();
         }
     }
 }
