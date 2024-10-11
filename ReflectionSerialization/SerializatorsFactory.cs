@@ -4,7 +4,7 @@ namespace ReflectionSerialization.Serializators
 {
     internal class SerializatorsFactory
     {
-        public static IEnumerable<ISerializator> GetAllSerializators()
+        public static List<ISerializator> GetAllSerializators()
         {
             var serializatorTypes = Assembly.GetExecutingAssembly()
                 .GetTypes()
@@ -24,7 +24,7 @@ namespace ReflectionSerialization.Serializators
             return serializators;
         }
 
-        public static IEnumerable<ISerializator> GetSerializatorsByType(string typeName)
+        public static List<ISerializator> GetSerializatorsByType(string typeName)
         {
             var serializators = GetAllSerializators();
 
@@ -35,7 +35,7 @@ namespace ReflectionSerialization.Serializators
                 throw new Exception($"Сериализаторы с типом '{typeName}' не найден.");
             }
 
-            return selectedSerializators;
+            return selectedSerializators.ToList();
         }
     }
 }

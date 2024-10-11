@@ -5,7 +5,9 @@ namespace ReflectionSerialization.Serializators
 {
     internal class CSVNewtonsoftSerializator : ISerializator
     {
-        public string SerializatorType => "CSV";
+        public string AverageSerializationTime { get; set; }
+        public string AverageDeserializationTime { get; set; }
+        public string SerializatorType => "csv";
 
         public string Serialize<T>(T serializationObject)
         {

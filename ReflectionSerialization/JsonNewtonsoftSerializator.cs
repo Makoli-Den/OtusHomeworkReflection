@@ -4,7 +4,9 @@ namespace ReflectionSerialization.Serializators
 {
     public class JsonNewtonsoftSerializator : ISerializator
     {
-        public string SerializatorType => "Json";
+        public string AverageSerializationTime { get; set; }
+        public string AverageDeserializationTime { get; set; }
+        public string SerializatorType => "json";
 
         public string Serialize<T>(T serializationObject)
         {

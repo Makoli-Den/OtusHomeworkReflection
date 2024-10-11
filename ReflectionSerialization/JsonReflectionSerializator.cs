@@ -1,11 +1,14 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace ReflectionSerialization.Serializators
 {
     public class JsonReflectionSerializator : ISerializator
     {
-        public string SerializatorType => "Json";
+        public string AverageSerializationTime { get; set; }
+        public string AverageDeserializationTime { get; set; }
+        public string SerializatorType => "json";
 
         public string Serialize<T>(T serializationObject)
         {
@@ -35,18 +38,28 @@ namespace ReflectionSerialization.Serializators
 
         public string SerializeIEnumerable<T>(IEnumerable<T> collection)
         {
+            List<double> average = new List<double>();
             var json = new StringBuilder("[");
 
             foreach (var item in collection)
             {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 json.Append(Serialize(item));
                 json.Append(",");
+
+                stopwatch.Stop();
+                var serializationTime = stopwatch.Elapsed.TotalMilliseconds;
+                average.Add(serializationTime);
             }
 
             if (json.Length > 1)
                 json.Length--;
 
             json.Append("]");
+
+            AverageSerializationTime = (average.Count > 0 ? average.Sum() / average.Count : 0).ToString();
 
             return json.ToString();
         }
@@ -88,14 +101,24 @@ namespace ReflectionSerialization.Serializators
         public IEnumerable<T> DeserializeIEnumerable<T>(string deserializationString) where T : new()
         {
             var list = new List<T>();
+            List<double> average = new List<double>();
 
             var objects = deserializationString.Trim('[', ']').Split(new[] { "},{" }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var objString in objects)
             {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 var obj = Deserialize<T>("{" + objString.Trim('}', '{') + "}");
                 list.Add(obj);
+
+                stopwatch.Stop();
+                var serializationTime = stopwatch.Elapsed.TotalMilliseconds;
+                average.Add(serializationTime);
             }
+
+            AverageDeserializationTime = (average.Count > 0 ? average.Sum() / average.Count : 0).ToString();
 
             return list;
         }

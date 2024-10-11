@@ -1,11 +1,14 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 
 namespace ReflectionSerialization.Serializators
 {
     internal class CSVReflectionSerializator : ISerializator
     {
-        public string SerializatorType => "CSV";
+        public string AverageSerializationTime { get; set; }
+        public string AverageDeserializationTime { get; set; }
+        public string SerializatorType => "csv";
 
         public string Serialize<T>(T serializationObject)
         {
@@ -21,6 +24,7 @@ namespace ReflectionSerialization.Serializators
         public string SerializeIEnumerable<T>(IEnumerable<T> collection)
         {
             var sb = new StringBuilder();
+            List<double> average = new List<double>();
 
             if (collection != null && collection.Any())
             {
@@ -28,9 +32,18 @@ namespace ReflectionSerialization.Serializators
 
                 foreach (var item in collection)
                 {
+                    var stopwatch = new Stopwatch();
+                    stopwatch.Start();
+
                     sb.AppendLine(CreateCsvContent(item));
+
+                    stopwatch.Stop();
+                    var serializationTime = stopwatch.Elapsed.TotalMilliseconds;
+                    average.Add(serializationTime);
                 }
             }
+
+            AverageSerializationTime = (average.Count > 0 ? average.Sum() / average.Count : 0).ToString();
 
             return sb.ToString();
         }
@@ -94,8 +107,13 @@ namespace ReflectionSerialization.Serializators
 
             var headers = lines[0].Split(',');
 
+            List<double> average = new List<double>();
+
             for (int i = 1; i < lines.Length; i++)
             {
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 var values = lines[i].Split(',');
                 var result = new T();
 
@@ -134,7 +152,13 @@ namespace ReflectionSerialization.Serializators
                 }
 
                 resultList.Add(result);
+
+                stopwatch.Stop();
+                var serializationTime = stopwatch.Elapsed.TotalMilliseconds;
+                average.Add(serializationTime);
             }
+
+            AverageDeserializationTime = (average.Count > 0 ? average.Sum() / average.Count : 0).ToString();
 
             return resultList;
         }

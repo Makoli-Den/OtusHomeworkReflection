@@ -4,8 +4,8 @@ namespace ReflectionSerialization.Serializators
 {
     internal interface ISerializator
     {
-        /*bool NeedExecTimeCheck { get; set; }
-        bool NeedFileSave { get; set; }*/
+        string AverageSerializationTime { get; set; }
+        string AverageDeserializationTime { get; set; }
         string SerializatorType { get; }
 
         string Serialize<T>(T serializationObject);
@@ -15,6 +15,7 @@ namespace ReflectionSerialization.Serializators
 
         CheckCSVSerializatorResult CheckSerializationTime<T>(T serializationObject)
         {
+            AverageSerializationTime = "";
             if (serializationObject == null)
             {
                 return new CheckCSVSerializatorResult();
@@ -37,6 +38,7 @@ namespace ReflectionSerialization.Serializators
 
         CheckCSVSerializatorResult CheckIEnumerableSerializationTime<T>(IEnumerable<T> serializationObject)
         {
+            AverageSerializationTime = "";
             if (serializationObject == null)
             {
                 return new CheckCSVSerializatorResult();
@@ -53,12 +55,14 @@ namespace ReflectionSerialization.Serializators
             return new CheckCSVSerializatorResult(
                 serializedString,
                 serializationTime.ToString(),
+                AverageSerializationTime,
                 this.GetType()
             );
         }
 
         CheckCSVSerializatorResult CheckDeserializationTime<T>(string deserializationString) where T : new()
         {
+            AverageDeserializationTime = "";
             if (deserializationString == default)
             {
                 return new CheckCSVSerializatorResult();
@@ -81,6 +85,7 @@ namespace ReflectionSerialization.Serializators
 
         CheckCSVSerializatorResult CheckIEnumerableDeserializationTime<T>(string deserializationString) where T : new()
         {
+            AverageDeserializationTime = "";
             if (deserializationString == default)
             {
                 return new CheckCSVSerializatorResult();
@@ -97,6 +102,7 @@ namespace ReflectionSerialization.Serializators
             return new CheckCSVSerializatorResult(
                 deserializedObject,
                 deserializationTime.ToString(),
+                AverageDeserializationTime,
                 this.GetType()
             );
         }
