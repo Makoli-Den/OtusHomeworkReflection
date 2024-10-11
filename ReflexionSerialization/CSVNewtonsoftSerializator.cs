@@ -1,11 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text.Json.Nodes;
 
-namespace ReflexionSerialization
+namespace ReflectionSerialization.Serializators
 {
-    internal class CSVNewtonsoftSerializator : ICSVSerializator
+    internal class CSVNewtonsoftSerializator : ISerializator
     {
+        public string SerializatorType => "CSV";
+
         public string Serialize<T>(T serializationObject)
         {
             var jsonArray = new JArray();
@@ -68,7 +69,7 @@ namespace ReflexionSerialization
                 {
                     var header = headers[j].Trim();
                     var value = values[j].Trim();
-                    dict[header] = value; // Можно добавить дополнительную логику для конвертации типов
+                    dict[header] = value;
                 }
 
                 jsonList.Add(dict);

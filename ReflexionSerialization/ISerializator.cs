@@ -1,11 +1,13 @@
 ﻿using System.Diagnostics;
 
-namespace ReflexionSerialization
+namespace ReflectionSerialization.Serializators
 {
-    internal interface ICSVSerializator
+    internal interface ISerializator
     {
-        bool NeedExecTimeCheck { get; set; }
-        bool NeedFileSave { get; set; }
+        /*bool NeedExecTimeCheck { get; set; }
+        bool NeedFileSave { get; set; }*/
+        string SerializatorType { get; }
+
         string Serialize<T>(T serializationObject);
         string SerializeIEnumerable<T>(IEnumerable<T> collection);
         T Deserialize<T>(string deserializationString) where T : new();

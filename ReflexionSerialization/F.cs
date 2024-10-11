@@ -1,4 +1,4 @@
-﻿namespace ReflexionSerialization
+﻿namespace ReflectionSerialization.TestData
 {
     internal class F
     {

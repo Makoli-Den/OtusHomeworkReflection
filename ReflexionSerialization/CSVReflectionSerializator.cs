@@ -1,10 +1,12 @@
 ﻿using System.Reflection;
 using System.Text;
 
-namespace ReflexionSerialization
+namespace ReflectionSerialization.Serializators
 {
-    internal class CSVReflexionSerializator : ICSVSerializator
+    internal class CSVReflectionSerializator : ISerializator
     {
+        public string SerializatorType => "CSV";
+
         public string Serialize<T>(T serializationObject)
         {
             var sb = new StringBuilder();

@@ -1,65 +1,199 @@
-﻿namespace ReflexionSerialization
+﻿using ReflectionSerialization.Serializators;
+using ReflectionSerialization.TestData;
+
+namespace ReflectionSerialization
 {
     internal static class Program
     {
         static void Main(string[] args)
         {
-            var obj = F.Get();
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var objects = new List<F>();
-            for (int i = 0; i < 100; i++)
+            string[] mainMenuOptions = { "Работа с Json", "Работа с CSV", "Выход" };
+            Action[] mainMenuActions = 
             {
-                objects.Add(F.GetRandom());
+                () => DisplayTypeBasedMenu("Json"),
+                () => DisplayTypeBasedMenu("CSV"),
+                Exit
+            };
+
+            ShowMenu("Главное меню", mainMenuOptions, mainMenuActions);
+        }
+
+        static void ShowMenu(string menuTitle, string[] options, Action[] actions)
+        {
+            if (options.Length != actions.Length)
+            {
+                throw new ArgumentException("Количество опций должно совпадать с количеством действий.");
             }
 
-            /*// Сериализация и десериализация с помощью рефлексии
-            ICSVSerializator reflectionSerializator = new CSVReflexionSerializator();
-            var reflectionResult = reflectionSerializator.CheckSerializationTime(obj);
-            var reflectionDeserializationResult = reflectionSerializator.CheckDeserializationTime<F>(reflectionResult.SerializedString);
-            Console.WriteLine($"Reflection serialization time: {reflectionResult.SerializationTime} ms");
-            Console.WriteLine("Reflection serialized string:");
-            Console.WriteLine();
-            Console.WriteLine(reflectionResult.SerializedString);
-            Console.WriteLine();
-            Console.WriteLine($"Reflection deserialization time: {reflectionDeserializationResult.DeserializationTime} ms");
-            Console.WriteLine();
-            Console.WriteLine();
+            int selectedIndex = 0;
 
-            var reflectionResult100 = reflectionSerializator.CheckIEnumerableSerializationTime<F>(objects);
-            var reflectionDeserializationResult100 = reflectionSerializator.CheckIEnumerableDeserializationTime<F>(reflectionResult100.SerializedString);
-            Console.WriteLine($"Reflection serialization time: {reflectionResult100.SerializationTime} ms");
-            Console.WriteLine("Reflection serialized string:");
-            Console.WriteLine();
-            Console.WriteLine(reflectionResult100.SerializedString);
-            Console.WriteLine();
-            Console.WriteLine($"Reflection deserialization time: {reflectionDeserializationResult100.DeserializationTime} ms");
-            Console.WriteLine();
-            Console.WriteLine();*/
+            while (true)
+            {
+                DisplayOptions(menuTitle, options, selectedIndex);
+                var key = Console.ReadKey();
 
-            // Сериализация и десериализация с помощью Newtonsoft.Json
-            ICSVSerializator jsonSerializator = new CSVNewtonsoftSerializator();
-            var jsonResult = jsonSerializator.CheckSerializationTime(obj);
-            var jsonDeserializationResult = jsonSerializator.CheckDeserializationTime<F>(jsonResult.SerializedString);
-            Console.WriteLine($"JSON serialization time: {jsonResult.SerializationTime} ms");
-            Console.WriteLine("JSON serialized string:");
-            Console.WriteLine();
-            Console.WriteLine(jsonResult.SerializedString);
-            Console.WriteLine();
-            Console.WriteLine($"JSON deserialization time: {jsonDeserializationResult.DeserializationTime} ms");
-            Console.WriteLine();
-            Console.WriteLine();
+                switch (key.Key)
+                {
+                    case ConsoleKey.UpArrow:
+                        selectedIndex = (selectedIndex == 0) ? options.Length - 1 : selectedIndex - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        selectedIndex = (selectedIndex == options.Length - 1) ? 0 : selectedIndex + 1;
+                        break;
+                    case ConsoleKey.Enter:
+                        actions[selectedIndex]();
+                        break;
+                }
+            }
+        }
 
-            var jsonResult100 = jsonSerializator.CheckIEnumerableSerializationTime(objects);
-            var jsonDeserializationResult100 = jsonSerializator.CheckIEnumerableDeserializationTime<F>(jsonResult100.SerializedString);
-            Console.WriteLine($"JSON serialization time: {jsonResult100.SerializationTime} ms");
-            Console.WriteLine("JSON serialized string:");
-            Console.WriteLine();
-            Console.WriteLine(jsonResult100.SerializedString);
-            Console.WriteLine();
-            Console.WriteLine($"JSON deserialization time: {jsonDeserializationResult100.DeserializationTime} ms");
-            Console.WriteLine();
-            Console.WriteLine();
+        static void DisplayMainLabel()
+        {
+            Console.WriteLine("Программа сериализации в CSV и десериализации из CSV\n\n");
+        }
 
+        // Метод для отображения опций меню
+        static void DisplayOptions(string menuTitle, string[] options, int selectedIndex)
+        {
+            Console.Clear();
+            DisplayMainLabel();
+            Console.WriteLine(menuTitle + ":\n");
+
+            for (int i = 0; i < options.Length; i++)
+            {
+                if (i == selectedIndex)
+                {
+                    Console.BackgroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                }
+
+                Console.WriteLine(options[i]);
+                Console.ResetColor();
+            }
+        }
+
+        // Действие для "Опция 1"
+        static void Option1()
+        {
+            Console.WriteLine("Вы выбрали 'Опция 1'.");
+            WaitForUser();
+        }
+
+        // Действие для "Опция 2"
+        static void Option2()
+        {
+            Console.WriteLine("Вы выбрали 'Опция 2'.");
+            WaitForUser();
+        }
+
+        static void DisplayTypeBasedMenu(string type)
+        {
+            string[] subMenuOptions = { "Работа с файлами", "Работа с классами", "Назад" };
+            Action[] subMenuActions =
+            {
+                () => FileWorkMenu(type),
+                () => ClassWorkMenu(type),
+                BackToMainMenu
+            };
+
+            ShowMenu("Работа с Json", subMenuOptions, subMenuActions);
+        }
+
+        static void FileWorkMenu(string type)
+        {
+
+        }
+
+        static void ClassWorkMenu(string type)
+        {
+            string[] subMenuOptions = { "Большой класс TestData", "Маленький класс F", "Назад" };
+            Action[] subMenuActions =
+            {
+                () => ClassWork<F>(type),
+                () => ClassWork<F>(type),
+                BackToMainMenu
+            };
+
+            ShowMenu("Работа с классами Json", subMenuOptions, subMenuActions);
+        }
+
+        static void ClassWork<T>(string type)
+        {
+
+        }
+
+        // Действие для "Подопция 2"
+        static void SimpleClass(string type)
+        {
+            int count = GetNumber();
+            string[] subMenuOptions = { "Начать", "Назад" };
+            Action[] subMenuActions = { () => Begin(count), BackToMainMenu };
+
+            ShowMenu($"Выбранное количество элементов: {count}", subMenuOptions, subMenuActions);
+        }
+
+        static void Begin(int count)
+        {
+            switch (count)
+            {
+                case 0:
+                    throw new Exception("Введен ноль, такого не может быть :(");
+                case 1:
+
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
+        static void DisplayCSVMenu()
+        {
+            string[] subMenuOptions = { "Работа с файлами", "Работа с классами", "Назад" };
+            Action[] subMenuActions = { SubOption1, SubOption1, BackToMainMenu };
+
+            ShowMenu("Дополнительное меню", subMenuOptions, subMenuActions);
+        }
+
+        // Действие для "Подопция 1"
+        static void SubOption1()
+        {
+            Console.WriteLine("Вы выбрали 'Подопция 1'.");
+            WaitForUser();
+        }
+
+        public static int GetNumber()
+        {
+            int number;
+            string input;
+
+            do
+            {
+                Console.Write("Введите количество элементов: ");
+                input = Console.ReadLine();
+
+            } while (!int.TryParse(input, out number) || number <= 0);
+
+            return number;
+        }
+
+        static void BackToMainMenu()
+        {
+            Console.Clear();
+            Console.WriteLine("Возвращаемся в главное меню...");
+        }
+
+        static void Exit()
+        {
+            Console.WriteLine("Выход из программы.");
+            Environment.Exit(0);
+        }
+
+        static void WaitForUser()
+        {
+            Console.WriteLine("Нажмите любую клавишу для продолжения...");
             Console.ReadKey();
         }
     }
