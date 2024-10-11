@@ -1,2 +1,2 @@
 # OtusHomeworkReflexion
-Домашнее задание на тему Reflexion по курсу от Otus
+Домашнее задание на тему Reflection по курсу от Otus
