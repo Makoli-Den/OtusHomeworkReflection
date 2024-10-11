@@ -30,5 +30,10 @@
             _deserializationTime = deserializationTime;
             _serializatorType = serializatorType;
         }
+
+        public void PrintCheckResults()
+        {
+
+        }
     }
 }
